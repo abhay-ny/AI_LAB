@@ -1,1 +1,75 @@
+# tic tac toe game by Abhay N Y
+import random
+
+# Display board
+def display(board):
+    print("\n")
+    for i in range(3):
+        print(board[3*i] + " | " + board[3*i+1] + " | " + board[3*i+2])
+        if i < 2:
+            print("--+---+--")
+    print("\n")
+
+# Check for winner
+def check_win(board, player):
+    win_combos = [(0,1,2), (3,4,5), (6,7,8), 
+                  (0,3,6), (1,4,7), (2,5,8), 
+                  (0,4,8), (2,4,6)]
+    for a,b,c in win_combos:
+        if board[a] == board[b] == board[c] == player:
+            return True
+    return False
+
+# Check draw
+def check_draw(board):
+    return " " not in board
+
+# Human move
+def human_move(board):
+    while True:
+        try:
+            move = int(input("Enter position (1-9): ")) - 1
+            if board[move] == " ":
+                return move
+            else:
+                print("Spot taken, try again.")
+        except (ValueError, IndexError):
+            print("Invalid input, choose 1-9.")
+
+# Computer move (random)
+def computer_move(board):
+    empty = [i for i in range(9) if board[i] == " "]
+    return random.choice(empty)
+
+# Main game
+def play():
+    board = [" "] * 9
+    current_player = "Human"
+
+    while True:
+        display(board)
+
+        if current_player == "Human":
+            move = human_move(board)
+            board[move] = "X"
+        else:
+            move = computer_move(board)
+            board[move] = "O"
+
+        if check_win(board, "X"):
+            display(board)
+            print("Human wins!")
+            break
+        elif check_win(board, "O"):
+            display(board)
+            print("Computer wins!")
+            break
+        elif check_draw(board):
+            display(board)
+            print("It's a draw!")
+            break
+
+        current_player = "Computer" if current_player == "Human" else "Human"
+
+play()
 
