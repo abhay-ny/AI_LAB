@@ -1,0 +1,130 @@
+#8 puzzle game using manhatten algorithm by Abhay NY
+
+import heapq
+
+# Define the goal state
+GOAL_STATE = (1, 2, 3, 4, 5, 6, 7, 8, 0)
+N = 3  # The size of the grid (3x3)
+
+# Helper function to convert a 2D grid to a 1D tuple
+def grid_to_tuple(grid):
+    return tuple(tile for row in grid for tile in row)
+
+# Helper function to convert a 1D tuple to a 2D grid
+def tuple_to_grid(tup):
+    return [list(tup[i:i + N]) for i in range(0, N * N, N)]
+
+# Pre-calculate goal positions for quick lookup
+GOAL_POSITIONS = {
+    tile: (i // N, i % N) for i, tile in enumerate(GOAL_STATE)
+}
+
+# A node in the search tree
+class PuzzleNode:
+    def __init__(self, state, parent=None, cost=0):
+        self.state = state
+        self.parent = parent
+        self.cost = cost
+        self.manhattan_distance = self.calculate_manhattan_distance()
+
+    # The __lt__ method is used for comparison in the heapq (priority queue)
+    def __lt__(self, other):
+        return (self.cost + self.manhattan_distance) < (other.cost + other.manhattan_distance)
+
+    # Heuristic function: calculate Manhattan distance
+    def calculate_manhattan_distance(self):
+        distance = 0
+        for i in range(N * N):
+            tile_value = self.state[i]
+            if tile_value != 0:
+                current_row, current_col = i // N, i % N
+                goal_row, goal_col = GOAL_POSITIONS[tile_value]
+                distance += abs(current_row - goal_row) + abs(current_col - goal_col)
+        return distance
+
+    # Check if the current state is the goal state
+    def is_goal_state(self):
+        return self.state == GOAL_STATE
+
+    # Generate all possible next states (neighbors)
+    def get_neighbors(self):
+        neighbors = []
+        state_grid = tuple_to_grid(self.state)
+        blank_row, blank_col = self.find_blank(state_grid)
+
+        moves = [(-1, 0), (1, 0), (0, -1), (0, 1)] # Up, Down, Left, Right
+
+        for dr, dc in moves:
+            new_row, new_col = blank_row + dr, blank_col + dc
+
+            if 0 <= new_row < N and 0 <= new_col < N:
+                new_grid = [row[:] for row in state_grid]
+                # Swap the blank tile with the adjacent tile
+                new_grid[blank_row][blank_col], new_grid[new_row][new_col] = \
+                    new_grid[new_row][new_col], new_grid[blank_row][blank_col]
+
+                new_state = grid_to_tuple(new_grid)
+                neighbors.append(PuzzleNode(new_state, self, self.cost + 1))
+        
+        return neighbors
+
+    # Find the position of the blank tile (0)
+    def find_blank(self, grid):
+        for r in range(N):
+            for c in range(N):
+                if grid[r][c] == 0:
+                    return r, c
+        return None, None
+
+def solve_8_puzzle(initial_state):
+    """
+    Solves the 8-puzzle using A* search with the Manhattan distance heuristic.
+    
+    Args:
+        initial_state (tuple): The starting configuration of the puzzle.
+        
+    Returns:
+        A list of states representing the solution path, or None if no solution exists.
+    """
+    
+    open_list = []
+    root_node = PuzzleNode(initial_state)
+    heapq.heappush(open_list, (root_node.cost + root_node.manhattan_distance, root_node))
+
+    closed_list = set()
+    closed_list.add(initial_state)
+    
+    while open_list:
+        f_score, current_node = heapq.heappop(open_list)
+
+        if current_node.is_goal_state():
+            path = []
+            while current_node:
+                path.append(current_node.state)
+                current_node = current_node.parent
+            return path[::-1]
+
+        for neighbor in current_node.get_neighbors():
+            if neighbor.state not in closed_list:
+                closed_list.add(neighbor.state)
+                heapq.heappush(open_list, (neighbor.cost + neighbor.manhattan_distance, neighbor))
+                
+    return None
+
+# Example Usage:
+if __name__ == "__main__":
+    # A solvable initial state.
+    initial_puzzle = (1, 2, 3, 4, 0, 5, 7, 8, 6)
+
+    solution_path = solve_8_puzzle(initial_puzzle)
+
+    if solution_path:
+        print("Solution found! Path of states:")
+        for i, state in enumerate(solution_path):
+            print(f"Move {i}:")
+            grid = tuple_to_grid(state)
+            for row in grid:
+                print(row)
+            print()
+    else:
+        print("No solution exists for this puzzle.")
