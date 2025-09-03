@@ -1,0 +1,81 @@
+#IDDFS algorithm by Abhay NY
+def dfs_limited(graph, start, goal, limit):
+    """
+    Performs a Depth-First Search with a depth limit.
+    
+    Args:
+        graph (dict): The graph represented as an adjacency list.
+        start: The starting node.
+        goal: The goal node to find.
+        limit (int): The maximum depth to search.
+        
+    Returns:
+        list: The path from start to goal if found, otherwise None.
+    """
+    stack = [(start, [start])]
+    
+    while stack:
+        current_node, path = stack.pop()
+        
+        # Check if the goal is found
+        if current_node == goal:
+            return path
+        
+        # Check if the depth limit has been reached
+        if len(path) > limit:
+            continue
+
+        # Explore neighbors
+        for neighbor in reversed(graph.get(current_node, [])):
+            if neighbor not in path:
+                new_path = list(path)
+                new_path.append(neighbor)
+                stack.append((neighbor, new_path))
+                
+    return None
+
+def iddfs(graph, start, goal):
+    """
+    Performs an Iterative Deepening Depth-First Search.
+    
+    Args:
+        graph (dict): The graph represented as an adjacency list.
+        start: The starting node.
+        goal: The goal node to find.
+        
+    Returns:
+        list: The path from start to goal, or None if the goal is unreachable.
+    """
+    depth_limit = 0
+    while True:
+        print(f"Searching with depth limit: {depth_limit}")
+        result = dfs_limited(graph, start, goal, depth_limit)
+        
+        if result is not None:
+            return result
+        
+        depth_limit += 1
+        
+# Example Usage:
+if __name__ == "__main__":
+    # Define a simple graph
+    graph = {
+        'A': ['B', 'C'],
+        'B': ['D', 'E'],
+        'C': ['F','G'],
+        'D': ['H', 'I'],
+        'E': ['J'],
+        'F': ['K'],
+        'G': [],
+    }
+    
+    start_node = 'A'
+    goal_node = 'K'
+    
+    path = iddfs(graph, start_node, goal_node)
+    
+    if path:
+        print("\nGoal found!")
+        print(f"Path: {' -> '.join(path)}")
+    else:
+        print("\nGoal not reachable from the start node.")
