@@ -1,0 +1,92 @@
+#8 puzzle game using A* algorithm by Abhay NY
+
+import heapq
+
+# Directions for movement: up, down, left, right
+moves = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+
+# Goal state of the 8 puzzle
+goal_state = [[1, 2, 3],
+              [4, 5, 6],
+              [7, 8, 0]]   # 0 represents the blank space
+
+# Manhattan distance heuristic
+def manhattan_distance(state):
+    distance = 0
+    for i in range(3):
+        for j in range(3):
+            value = state[i][j]
+            if value != 0:  # Skip blank tile
+                target_x = (value - 1) // 3
+                target_y = (value - 1) % 3
+                distance += abs(i - target_x) + abs(j - target_y)
+    return distance
+
+# Function to check if the state is goal
+def is_goal(state):
+    return state == goal_state
+
+# Function to get neighbors (possible moves)
+def get_neighbors(state):
+    neighbors = []
+    # Find blank (0)
+    x, y = [(ix, iy) for ix, row in enumerate(state) for iy, i in enumerate(row) if i == 0][0]
+    
+    for dx, dy in moves:
+        new_x, new_y = x + dx, y + dy
+        if 0 <= new_x < 3 and 0 <= new_y < 3:
+            # Swap blank with new position
+            new_state = [row[:] for row in state]
+            new_state[x][y], new_state[new_x][new_y] = new_state[new_x][new_y], new_state[x][y]
+            neighbors.append(new_state)
+    return neighbors
+
+# Convert state to tuple for hashing
+def state_to_tuple(state):
+    return tuple(tuple(row) for row in state)
+
+# A* algorithm
+def a_star(start_state):
+    open_set = []
+    heapq.heappush(open_set, (manhattan_distance(start_state), 0, start_state, [])) 
+    visited = set()
+
+    while open_set:
+        f, g, current, path = heapq.heappop(open_set)
+
+        if is_goal(current):
+            return path + [current]
+
+        visited.add(state_to_tuple(current))
+
+        for neighbor in get_neighbors(current):
+            if state_to_tuple(neighbor) not in visited:
+                heapq.heappush(open_set, (g + 1 + manhattan_distance(neighbor), g + 1, neighbor, path + [current]))
+
+    return None  # No solution
+
+# Print state in nice format
+def print_state(state):
+    for row in state:
+        print(row)
+    print()
+
+# Main program
+if __name__ == "__main__":
+    print("Enter the initial state of the puzzle (use 0 for blank):")
+    start_state = []
+    for i in range(3):
+        row = list(map(int, input(f"Row {i+1} (space separated): ").split()))
+        start_state.append(row)
+
+    print("\nInitial State:")
+    print_state(start_state)
+
+    solution = a_star(start_state)
+
+    if solution:
+        print("✅ Solution found in", len(solution) - 1, "moves:")
+        for step in solution:
+            print_state(step)
+    else:
+        print("❌ No solution exists.")
