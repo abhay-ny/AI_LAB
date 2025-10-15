@@ -1,74 +1,86 @@
 # Knowledge base_using_pre_positional_logic problem by Abhay NY
 import itertools
 
-def solve_propositional_logic():
+def solve_and_print_table():
     """
-    Solves the propositional logic problem by:
-    1. Generating all possible models for the symbols P, Q, R.
-    2. Finding the models where the Knowledge Base (KB) is true.
-    3. Checking if the KB entails each of the three queries.
+    Constructs a full truth table for the given KB, finds its models,
+    and checks for entailment of several queries.
     """
     symbols = ['P', 'Q', 'R']
 
-    # --- 1. Define Knowledge Base (KB) and Queries as functions ---
-    # We use lambda functions to represent each logical sentence.
-    # Note: The implication A -> B is logically equivalent to (not A or B).
+    # --- 1. Define Knowledge Base (KB) and Queries ---
+    # Implication A -> B is logically equivalent to (not A or B).
+    s1 = lambda m: not m['Q'] or m['P']        # Q -> P
+    s2 = lambda m: not m['P'] or not m['Q']    # P -> ~Q
+    s3 = lambda m: m['Q'] or m['R']            # Q v R
     
-    kb_sentences = {
-        "S1: Q -> P": lambda m: not m['Q'] or m['P'],
-        "S2: P -> ~Q": lambda m: not m['P'] or not m['Q'],
-        "S3: Q or R": lambda m: m['Q'] or m['R']
-    }
-
+    # The KB is true only if all its sentences are true.
+    kb_true = lambda m: s1(m) and s2(m) and s3(m)
+    
     queries = {
         "R": lambda m: m['R'],
         "R -> P": lambda m: not m['R'] or m['P'],
         "Q -> R": lambda m: not m['Q'] or m['R']
     }
 
-    # --- 2. Generate all possible models ---
-    # A model is a dictionary assigning True/False to each symbol.
+    # --- 2. Generate and Print the Truth Table ---
+    print("--- i) Complete Truth Table ---")
+    
+    # Helper to format boolean values for printing
+    def format_bool(val):
+        return "T" if val else "F"
+
+    # Print table header
+    header = f"| {'P':^3} | {'Q':^3} | {'R':^3} || {'Q->P':^6} | {'P->~Q':^7} | {'QvR':^5} || {'KB':^4} |"
+    print(header)
+    print("-" * len(header))
+
+    # Generate all possible models (rows of the table)
     all_models = [dict(zip(symbols, V)) for V in itertools.product([True, False], repeat=len(symbols))]
-
-    # --- 3. Find the models where the KB is true ---
+    
     kb_models = []
-    print("--- Finding Models of the KB ---")
     for model in all_models:
-      
-        if all(sentence(model) for sentence in kb_sentences.values()):
-            kb_models.append(model)
-            
-    if not kb_models:
-        print("The KB is unsatisfiable (has no models).")
-        return
+        # Calculate truth value for each sentence in the current model
+        s1_val = s1(model)
+        s2_val = s2(model)
+        s3_val = s3(model)
+        kb_val = kb_true(model)
 
-    print(f" Found {len(kb_models)} models where the KB is true:")
+        # If the KB is true in this model, save it for the entailment check
+        if kb_val:
+            kb_models.append(model)
+            # Add a marker to highlight the KB models in the table
+            marker = "<- MODEL" 
+        else:
+            marker = ""
+
+        # Print the current row of the truth table
+        row = (f"| {format_bool(model['P']):^3} | {format_bool(model['Q']):^3} | {format_bool(model['R']):^3} || "
+               f"{format_bool(s1_val):^6} | {format_bool(s2_val):^7} | {format_bool(s3_val):^5} || "
+               f"{format_bool(kb_val):^4} | {marker}")
+        print(row)
+
+    print("-" * len(header))
+    print(f"\n The models where the KB is true are:")
     for i, model in enumerate(kb_models):
         print(f"  Model {i+1}: {model}")
-    print("-" * 40)
 
 
-    # --- 4. Check entailment for each query ---
-    print("\n--- Checking Entailment for Each Query ---")
+    # --- 3. Check Entailment for Each Query ---
+    print("\n\n--- ii), iii), iv) Entailment Checks ---")
     
     for name, query_func in queries.items():
-
-        entails = True
-        counterexample = None
+        # Entailment holds if the query is true in ALL models of the KB.
+        entails = all(query_func(model) for model in kb_models)
         
-        for model in kb_models:
-            if not query_func(model):
-                entails = False
-                counterexample = model
-                break 
-
-        print(f"\nQuery: Does KB entail '{name}'?")
+        print(f"\n Does KB entail '{name}'?")
         if entails:
-            print(f"   Yes, KB entails '{name}'.")
-            print("      The query is true in all models of the KB.")
+            print(f"    Yes. The query '{name}' is true in all models of the KB.")
         else:
-            print(f"   No, KB does not entail '{name}'.")
-            print(f"      Counterexample: In model {counterexample}, the KB is true but the query is false.")
+            # Find a specific counterexample to show why it fails
+            counterexample = next(m for m in kb_models if not query_func(m))
+            print(f"   No. A counterexample was found.")
+            print(f"   In model {counterexample}, the KB is true but the query '{name}' is false.")
 
-# Run the solver
-solve_propositional_logic()
+# --- Run the program ---
+solve_and_print_table()
