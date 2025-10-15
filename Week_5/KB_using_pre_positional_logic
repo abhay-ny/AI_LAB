@@ -1,0 +1,73 @@
+import itertools
+
+def solve_propositional_logic():
+    """
+    Solves the propositional logic problem by:
+    1. Generating all possible models for the symbols P, Q, R.
+    2. Finding the models where the Knowledge Base (KB) is true.
+    3. Checking if the KB entails each of the three queries.
+    """
+    symbols = ['P', 'Q', 'R']
+
+    # --- 1. Define Knowledge Base (KB) and Queries as functions ---
+    # We use lambda functions to represent each logical sentence.
+    # Note: The implication A -> B is logically equivalent to (not A or B).
+    
+    kb_sentences = {
+        "S1: Q -> P": lambda m: not m['Q'] or m['P'],
+        "S2: P -> ~Q": lambda m: not m['P'] or not m['Q'],
+        "S3: Q or R": lambda m: m['Q'] or m['R']
+    }
+
+    queries = {
+        "R": lambda m: m['R'],
+        "R -> P": lambda m: not m['R'] or m['P'],
+        "Q -> R": lambda m: not m['Q'] or m['R']
+    }
+
+    # --- 2. Generate all possible models ---
+    # A model is a dictionary assigning True/False to each symbol.
+    all_models = [dict(zip(symbols, V)) for V in itertools.product([True, False], repeat=len(symbols))]
+
+    # --- 3. Find the models where the KB is true ---
+    kb_models = []
+    print("--- Finding Models of the KB ---")
+    for model in all_models:
+      
+        if all(sentence(model) for sentence in kb_sentences.values()):
+            kb_models.append(model)
+            
+    if not kb_models:
+        print("The KB is unsatisfiable (has no models).")
+        return
+
+    print(f" Found {len(kb_models)} models where the KB is true:")
+    for i, model in enumerate(kb_models):
+        print(f"  Model {i+1}: {model}")
+    print("-" * 40)
+
+
+    # --- 4. Check entailment for each query ---
+    print("\n--- Checking Entailment for Each Query ---")
+    
+    for name, query_func in queries.items():
+
+        entails = True
+        counterexample = None
+        
+        for model in kb_models:
+            if not query_func(model):
+                entails = False
+                counterexample = model
+                break 
+
+        print(f"\nQuery: Does KB entail '{name}'?")
+        if entails:
+            print(f"   Yes, KB entails '{name}'.")
+            print("      The query is true in all models of the KB.")
+        else:
+            print(f"   No, KB does not entail '{name}'.")
+            print(f"      Counterexample: In model {counterexample}, the KB is true but the query is false.")
+
+# Run the solver
+solve_propositional_logic()
