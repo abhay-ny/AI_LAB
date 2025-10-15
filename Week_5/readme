@@ -1,0 +1,12 @@
+Create a knowledge base using prepositional logic and show that the given query entails the knowledge base or not.
+
+Consider a knowledge base KB that contains the following propositional logic sentences:
+
+Q → P
+P → ¬Q
+Q∨R
+
+i) Construct a truth table that shows the truth value of each sentence in KB and indicate the models in which the KB is true.
+ii) Does KB entail R?
+iii) Does KB entail R → P?
+iv) Does KB entail Q → R?
