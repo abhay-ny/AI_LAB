@@ -1,0 +1,66 @@
+# Simple Forward Chaining (Forward Reasoning) System By Abhay NY
+
+class KnowledgeBase:
+    def __init__(self):
+        self.facts = set()
+        self.rules = []
+
+    def add_fact(self, fact):
+        self.facts.add(fact.strip())
+
+    def add_rule(self, premise, conclusion):
+        premises = [p.strip() for p in premise]
+        self.rules.append((premises, conclusion.strip()))
+
+    def forward_chain(self, query):
+        query = query.strip()
+        new_inferred = True
+
+        print("\nStarting Forward Chaining...\n")
+
+        while new_inferred:
+            new_inferred = False
+            for premise, conclusion in self.rules:
+                if all(p in self.facts for p in premise) and conclusion not in self.facts:
+                    print(f"Inferred: {conclusion} from {premise}")
+                    self.facts.add(conclusion)
+                    new_inferred = True
+
+                    if query in self.facts:
+                        print(f"\n Query '{query}' proved TRUE!")
+                        return True
+
+        print(f"\n Query '{query}' could NOT be proved.")
+        return False
+
+
+if __name__ == "__main__":
+    kb = KnowledgeBase()
+
+    print("=== FORWARD REASONING SYSTEM ===")
+
+    # Input Facts
+    n = int(input("Enter number of facts: "))
+    for i in range(n):
+        fact = input(f"Enter fact {i+1}: ")
+        kb.add_fact(fact)
+
+    # Input Rules
+    m = int(input("\nEnter number of rules: "))
+    for i in range(m):
+        rule_input = input(f"Enter rule {i+1} in form 'A,B -> C': ")
+        lhs, rhs = rule_input.split("->")
+        premises = [p.strip() for p in lhs.split(",") if p.strip()]
+        conclusion = rhs.strip()
+        kb.add_rule(premises, conclusion)
+
+    # Input Query
+    query = input("\nEnter query to prove: ")
+
+    # Run forward reasoning
+    kb.forward_chain(query)
+
+    # Show final facts
+    print("\nFinal Knowledge Base Facts:")
+    for fact in kb.facts:
+        print(" -", fact)
