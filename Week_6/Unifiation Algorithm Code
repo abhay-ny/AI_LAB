@@ -1,0 +1,76 @@
+#Unifiation code by Abhay NY
+import re
+
+def is_variable(term):
+    """A variable starts with a lowercase letter."""
+    return term[0].islower()
+
+def parse_predicate(expr):
+    """Parse predicate like P(x,y) -> ('P', ['x', 'y'])"""
+    expr = expr.strip()
+    match = re.match(r"(\w+)\((.*)\)", expr)
+    if not match:
+        return expr, []  # constant or symbol
+    pred_name = match.group(1)
+    args = [arg.strip() for arg in match.group(2).split(",")]
+    return pred_name, args
+
+def unify(expr1, expr2, subs=None):
+    """Main unification algorithm."""
+    if subs is None:
+        subs = {}
+
+    # Apply current substitutions
+    for var in subs:
+        expr1 = expr1.replace(var, subs[var])
+        expr2 = expr2.replace(var, subs[var])
+
+    name1, args1 = parse_predicate(expr1)
+    name2, args2 = parse_predicate(expr2)
+
+    # If predicates are different, fail
+    if name1 != name2:
+        return None
+
+    # If no arguments (constants)
+    if not args1 and not args2:
+        return subs if name1 == name2 else None
+
+    # If number of arguments differs
+    if len(args1) != len(args2):
+        return None
+
+    for a1, a2 in zip(args1, args2):
+        if a1 == a2:
+            continue
+        elif is_variable(a1):
+            subs[a1] = a2
+        elif is_variable(a2):
+            subs[a2] = a1
+        else:
+            # Check recursively for complex terms
+            res = unify(a1, a2, subs)
+            if res is None:
+                return None
+
+    return subs
+
+
+# -------- MAIN PROGRAM --------
+if __name__ == "__main__":
+    print("=== FIRST ORDER LOGIC UNIFICATION ===")
+
+    expr1 = input("Enter first expression: ")
+    expr2 = input("Enter second expression: ")
+
+    result = unify(expr1, expr2)
+
+    print("\n-----------------------------")
+    if result:
+        print("Unification Successful!")
+        print("Substitutions:")
+        for var, val in result.items():
+            print(f"  {var} / {val}")
+    else:
+        print("Unification Failed.")
+    print("-----------------------------")
